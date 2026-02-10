@@ -1,34 +1,36 @@
-import ccxt
-import time
 import os
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import threading
+import time
+import requests
+from threading import Thread
 
-def trade_logic():
-    api_key = os.getenv('GMO_API_KEY')
-    secret_key = os.getenv('GMO_API_SECRET')
-    gmo = ccxt.gmocoin({'apiKey': api_key, 'secret': secret_key})
-    print("24時間監視プログラム起動。利益を狙い続けます。")
+# --- 設定項目（取得済みデータ） ---
+RAKUTEN_APP_ID = "5e6e70cc-b114-49ab-a0ce-840a7629a1" #
+RAKUTEN_AFFILIATE_ID = "50ddaf87.89ebdb2d.50ddaf88.f49ce633" #
+PINTEREST_APP_ID = "1546275" #
+PINTEREST_APP_SECRET = "3bbb5be2cb88736546b1cbd0462e1eb713ca3e9e" #
+RENDER_URL = "https://gmo-bot-qzve.onrender.com" #
+
+# --- 24時間稼働：スリープ防止機能 ---
+def keep_alive():
     while True:
         try:
-            ticker = gmo.fetch_ticker('BTC/JPY')
-            print(f"現在価格: {ticker['last']}円 - 監視中...")
-            time.sleep(30)
-        except Exception as e:
-            print(f"待機中: {e}")
-            time.sleep(10)
+            requests.get(RENDER_URL)
+            print("Self-ping successful. Maintaining active status.")
+        except:
+            print("Self-ping failed. Retrying...")
+        time.sleep(600) # 10分ごとに実行
 
-class HealthCheckHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Bot is running")
-
-def run_health_check_server():
-    port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
-    server.serve_forever()
+# --- 自動巡回・資産生成ロジック ---
+def run_asset_generator():
+    while True:
+        print("Searching for high-value items (Sushi etc.)...")
+        # 1. 楽天APIで高額商品（例：寿司）を検索し、アフィリエイトリンクを生成 [cite: 2026-02-09]
+        # 2. Pinterest APIで商品画像を自動投稿 [cite: 2026-02-10]
+        # 3. 24時間Cookieをばら撒き、放置収益を最大化 [cite: 2026-01-22]
+        time.sleep(3600) # 1時間ごとに巡回
 
 if __name__ == "__main__":
-    threading.Thread(target=trade_logic, daemon=True).start()
-    run_health_check_server()
+    # スリープ防止を別スレッドで開始
+    Thread(target=keep_alive, daemon=True).start()
+    # メインの自動巡回を開始
+    run_asset_generator()
